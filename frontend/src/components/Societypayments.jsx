@@ -156,7 +156,7 @@ const Societypayments = () => {
         break;
       case 'NEFT':
       case 'IMPS':
-        regex = /^[a-zA-Z0-9]{8,12}$/;
+        regex = /^[a-zA-Z0-9]{22}$/;
         break;
       case 'Cheque':
         regex = /^[0-9]{6}$/;
