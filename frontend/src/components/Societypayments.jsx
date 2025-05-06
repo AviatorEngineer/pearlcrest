@@ -152,13 +152,13 @@ const Societypayments = () => {
     let regex;
     switch (mode) {
       case 'UPI':
-        regex = /^[a-zA-Z0-9]{12, 20}$/;
+        regex = /^[a-zA-Z0-9]{12,20}$/;
         break;
       case 'NEFT':
-        regex = /^[a-zA-Z0-9]{11, 22}$/;
+        regex = /^[a-zA-Z0-9]{11,22}$/;
         break;
       case 'IMPS':
-        regex = /^[a-zA-Z0-9]{8, 22]}$/;
+        regex = /^[a-zA-Z0-9]{8,22}$/;
         break;
       case 'Cheque':
         regex = /^[0-9]{6}$/;
