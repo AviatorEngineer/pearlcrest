@@ -458,11 +458,11 @@ const Societypayments = () => {
                           className="ml-2 text-blue-500 hover:text-blue-700 focus:outline-none"
                           title={
                             paymentMode === 'UPI' 
-                              ? 'UPI Reference Number should be 12 alphanumeric characters long.' 
+                              ? 'UPI Reference Number should be 12-20 alphanumeric characters long.' 
                               : paymentMode === 'NEFT' 
-                                ? 'NEFT Reference Number should be 8 to 12 alphanumeric characters long.' 
+                                ? 'NEFT Reference Number should be 11-22 alphanumeric characters long.' 
                                 : paymentMode === 'IMPS' 
-                                  ? 'IMPS Reference Number should be 8 to 12 alphanumeric characters long.' 
+                                  ? 'IMPS Reference Number should be 8 to 22 alphanumeric characters long.' 
                                   : 'Cheque Number should be 6 numeric characters long.'
                           }
                         >
