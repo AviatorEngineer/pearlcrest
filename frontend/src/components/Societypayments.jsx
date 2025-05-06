@@ -473,11 +473,11 @@ const Societypayments = () => {
                         type="text"
                         placeholder={
                           paymentMode === 'UPI' 
-                            ? 'Enter 12-digit UPI reference' 
+                            ? 'Enter 12-20 digit UPI reference' 
                             : paymentMode === 'NEFT' 
-                              ? 'Enter 8-12 digit NEFT reference' 
+                              ? 'Enter 11-22 digit NEFT reference' 
                               : paymentMode === 'IMPS' 
-                                ? 'Enter 8-12 digit IMPS reference' 
+                                ? 'Enter 8-22 digit IMPS reference' 
                                 : 'Enter 6-digit cheque number'
                         }
                         value={transactionId}
