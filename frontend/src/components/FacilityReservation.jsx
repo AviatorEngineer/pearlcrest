@@ -32,7 +32,12 @@ export default function FacilityReservation() {
                     axios.get("/api/v1/demand/getpaydemand")
                 ]);
                 
-                setBookedDates(datesResponse.data.data);
+                // Ensure all dates are Date objects
+                const bookedDatesArray = datesResponse.data.data.map(item => ({
+                    ...item,
+                    dates: item.dates.map(dateStr => new Date(dateStr))
+                }));
+                setBookedDates(bookedDatesArray);
                 
                 const facilities = demandResponse.data.data.response
                     .filter(obj => obj.type === "FACILITY RESERVATION");
@@ -65,13 +70,11 @@ export default function FacilityReservation() {
     }, [selectedDates, amountPerDay]);
 
     // Get booked dates for selected facility
-    useEffect(() => {
-        if (facilityType) {
-            const facility = bookedDates.find((ele) => ele.type === facilityType);
-            const datesArray = facility?.dates || [];
-            setBookedDates(datesArray.map(date => new Date(date)));
-        }
-    }, [facilityType, bookedDates]);
+    const getBookedDatesForFacility = () => {
+        if (!facilityType) return [];
+        const facility = bookedDates.find((ele) => ele.type === facilityType);
+        return facility?.dates || [];
+    };
 
     const handleDateClick = (date) => {
         const dateExists = selectedDates.some(d => d.getTime() === date.getTime());
@@ -81,6 +84,23 @@ export default function FacilityReservation() {
             setSelectedDates([...selectedDates, date].sort((a, b) => a - b));
         }
         if (checkout) setCheckout(false);
+    };
+
+    const filterAvailableDates = (date) => {
+        const facilityBookedDates = getBookedDatesForFacility();
+        return !facilityBookedDates.some(bookedDate => 
+            bookedDate.getTime() === date.getTime()
+        );
+    };
+
+    const dayClassName = (date) => {
+        const facilityBookedDates = getBookedDatesForFacility();
+        const isBooked = facilityBookedDates.some(d => d.getTime() === date.getTime());
+        const isSelected = selectedDates.some(d => d.getTime() === date.getTime());
+        
+        if (isBooked) return 'bg-red-100 text-red-500';
+        if (isSelected) return 'bg-blue-500 text-white';
+        return '';
     };
 
     const handleCheckout = async () => {
@@ -169,21 +189,6 @@ export default function FacilityReservation() {
         } finally {
             setLoading(false);
         }
-    };
-
-    const filterAvailableDates = (date) => {
-        return !bookedDates.some(bookedDate => 
-            bookedDate.toDateString() === date.toDateString()
-        );
-    };
-
-    const dayClassName = (date) => {
-        const isBooked = bookedDates.some(d => d.toDateString() === date.toDateString());
-        const isSelected = selectedDates.some(d => d.toDateString() === date.toDateString());
-        
-        if (isBooked) return 'bg-red-100 text-red-500';
-        if (isSelected) return 'bg-blue-500 text-white';
-        return '';
     };
 
     return (
