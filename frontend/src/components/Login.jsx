@@ -32,7 +32,7 @@ export default function Login() {
       console.log(response);
       localStorage.setItem("user", JSON.stringify(response.data.data.flat));
       setIsLoading(false);
-      setShowReviewPopup(false);
+      navigate("/db");
     })
     .catch((error) => {
       Swal.fire({
