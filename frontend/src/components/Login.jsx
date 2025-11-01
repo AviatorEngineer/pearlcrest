@@ -32,7 +32,7 @@ export default function Login() {
       console.log(response);
       localStorage.setItem("user", JSON.stringify(response.data.data.flat));
       setIsLoading(false);
-      setShowReviewPopup(true); // Show review popup after successful login
+      setShowReviewPopup(false);
     })
     .catch((error) => {
       Swal.fire({
