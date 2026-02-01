@@ -7,6 +7,8 @@ import {Renter} from "../models/renters.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import bcrypt from "bcrypt"
 import nodemailer from "nodemailer"
+import crypto from "crypto"
+import { PasswordResetToken } from "../models/passwordResetToken.model.js"
 // for admin to create flat database
 // nodemailer stuff
 
@@ -272,4 +274,255 @@ const changepassword = asyncHandler(async(req, res) => {
         })
     }
 })
-export {registerFlat, adminresetpassword, loginFlat, displayFlats, getCurrentUser, registerFlatbyAdmin, logoutUser, sendOtpVerificationEmail, changepassword}
+
+// Forgot Password - Send OTP without old password requirement
+const forgotPasswordOtp = asyncHandler(async(req, res) => {
+    const {flatnumber} = req.body;
+    if(!flatnumber){
+        throw new ApiError(400, "Flat number is required")
+    }
+    const flat = await Flat.findOne({flatnumber});
+    if(!flat){
+        throw new ApiError(404, "Flat Number is invalid")
+    }
+    const flatid = flat?._id;
+    const owner = await Owner.findOne({flat: {$in: flatid}})
+    const renter = await Renter.findOne({flat: {$in: flatid}})
+    const otp = `${Math.floor(Math.random()*9000+1000)}`
+    const owneremail = owner?.email
+    const renteremail = renter?.email
+    const mailOptions = {
+        from: '"Pearl Crest Society" <pearlcrestsociety@gmail.com>',
+        to: [owneremail, renteremail],
+        subject: "Password Reset OTP - Pearl Crest Society",
+        html: `<h3>From Mr. Manish, The Treasurer on behalf of Pearl Crest Flat Owner's Society.</h3><p>You requested a password reset for your Pearl Crest Society account. Enter <b>${otp}</b> on the website to reset your password</p>
+        <p>This code <b>expires in 5 minutes</b>.</p>
+        <p>If you did not request this, please ignore this email.</p>`
+    }
+    const saltRounds = 10;
+    const hashedOTP = await bcrypt.hash(otp, saltRounds)
+    const response = await otpverification.create({
+        userId: flatid,
+        otp: hashedOTP,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 360000
+    })
+    const info = await transporter.sendMail(mailOptions)
+    return res.status(200).json({
+        status: "PENDING",
+        info,
+        message: "OTP sent to registered email addresses",
+        data: {
+            userId: flatid,
+            owneremail
+        }
+    })
+})
+
+// Reset Password - Verify OTP and update password
+const resetPassword = asyncHandler(async(req, res) => {
+    try {
+        const {flatnumber, otp, newpassword} = req.body
+        if(!flatnumber || !otp || !newpassword)
+            throw new ApiError(400, "All fields are required")
+        const flat = await Flat.findOne({flatnumber})
+        if(!flat) {
+            throw new ApiError(404, "Flat not found")
+        }
+        const flatid = flat?._id
+        const otpverify = await otpverification.find({
+            userId: flatid,
+        })
+        if(otpverify.length<=0){
+            throw new ApiError(401, "No OTP request found. Please request OTP again")
+        }
+        const {expiresAt} = otpverify[0]
+        const hashedOTP = otpverify[0].otp
+        if(expiresAt < Date.now()){
+            await otpverification.deleteMany({userId: flatid})
+            throw new ApiError(400, "OTP has expired. Please request a new one")
+        }
+        const validOTP = await bcrypt.compare(otp, hashedOTP)
+        if(!validOTP){
+            throw new ApiError(401, "Invalid OTP. Please check and try again")
+        }
+        const savepass = await bcrypt.hash(newpassword, 10);
+        const response = await Flat.updateOne({_id: flatid}, {$set: {password: savepass}})
+        await otpverification.deleteMany({userId: flatid})
+        return res.json({
+            status: "Success",
+            message: "Password reset successfully",
+            response
+        })
+    } catch (error) {
+        res.status(error.status || 500).json({
+            status: "Failed",
+            message: error.message
+        })
+    }
+})
+
+// Admin send password reset link via email
+const sendPasswordResetLink = asyncHandler(async(req, res) => {
+    try {
+        const {email, flatnumber} = req.body
+        
+        if(!email || !flatnumber) {
+            throw new ApiError(400, "Email and flat number are required")
+        }
+
+        const flat = await Flat.findOne({flatnumber: flatnumber.toUpperCase()})
+        if(!flat) {
+            throw new ApiError(404, "Flat not found")
+        }
+
+        // Generate a unique reset token
+        const resetToken = crypto.randomBytes(32).toString('hex')
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
+
+        // Save token to database
+        const passwordResetToken = await PasswordResetToken.create({
+            flatId: flat._id,
+            flatnumber: flat.flatnumber,
+            email: email,
+            token: resetToken,
+            expiresAt: expiresAt
+        })
+
+        // Generate reset link
+        const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`
+
+        // Send email with reset link
+        const mailOptions = {
+            from: '"Pearl Crest Society" <pearlcrestsociety@gmail.com>',
+            to: email,
+            subject: "Password Reset Link - Pearl Crest Society",
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #333;">Password Reset Request</h2>
+                    <p>Hello Resident,</p>
+                    <p>A password reset request has been initiated for Flat <strong>${flat.flatnumber}</strong>.</p>
+                    <p style="color: #666; font-size: 14px;">This link is valid for <strong>5 minutes only</strong>.</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${resetLink}" style="background-color: #d32f2f; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                            Reset Password
+                        </a>
+                    </div>
+                    <p>Or copy this link:</p>
+                    <p style="word-break: break-all; background-color: #f5f5f5; padding: 10px; border-radius: 5px; font-size: 12px;">
+                        ${resetLink}
+                    </p>
+                    <p style="color: #999; font-size: 12px; margin-top: 30px;">
+                        If you did not request this, please ignore this email. The link will expire in 5 minutes.
+                    </p>
+                    <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                    <p style="color: #999; font-size: 12px;">
+                        <strong>Pearl Crest Flat Owners Society</strong><br>
+                        Argora, Pundag Road, Ranchi - 834002
+                    </p>
+                </div>
+            `
+        }
+
+        await transporter.sendMail(mailOptions)
+
+        return res.status(200).json(new ApiResponse(
+            200,
+            {
+                message: "Password reset link sent successfully",
+                email: email,
+                flatnumber: flat.flatnumber,
+                expiresAt: expiresAt
+            },
+            "Password reset link has been sent"
+        ))
+    } catch (error) {
+        console.log(error)
+        res.status(error.status || 500).json(new ApiError(error.status || 500, error.message || "Failed to send reset link"))
+    }
+})
+
+// Verify and use password reset token
+const verifyPasswordResetToken = asyncHandler(async(req, res) => {
+    try {
+        const {token} = req.params
+        
+        if(!token) {
+            throw new ApiError(400, "Reset token is required")
+        }
+
+        // Find and verify token
+        const resetToken = await PasswordResetToken.findOne({
+            token: token,
+            used: false,
+            expiresAt: {$gt: new Date()}
+        })
+
+        if(!resetToken) {
+            throw new ApiError(400, "Invalid or expired reset token")
+        }
+
+        return res.status(200).json(new ApiResponse(
+            200,
+            {
+                flatnumber: resetToken.flatnumber,
+                token: token
+            },
+            "Token is valid"
+        ))
+    } catch (error) {
+        console.log(error)
+        res.status(error.status || 500).json(new ApiError(error.status || 500, error.message || "Token verification failed"))
+    }
+})
+
+// Complete password reset with token
+const completePasswordReset = asyncHandler(async(req, res) => {
+    try {
+        const {token, newPassword} = req.body
+        
+        if(!token || !newPassword) {
+            throw new ApiError(400, "Token and new password are required")
+        }
+
+        // Find and verify token
+        const resetToken = await PasswordResetToken.findOne({
+            token: token,
+            used: false,
+            expiresAt: {$gt: new Date()}
+        })
+
+        if(!resetToken) {
+            throw new ApiError(400, "Invalid or expired reset token")
+        }
+
+        // Update password
+        const flat = await Flat.findById(resetToken.flatId)
+        if(!flat) {
+            throw new ApiError(404, "Flat not found")
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10)
+        await Flat.updateOne(
+            {_id: resetToken.flatId},
+            {$set: {password: hashedPassword}}
+        )
+
+        // Mark token as used
+        await PasswordResetToken.updateOne(
+            {_id: resetToken._id},
+            {$set: {used: true}}
+        )
+
+        return res.status(200).json(new ApiResponse(
+            200,
+            {},
+            "Password has been reset successfully"
+        ))
+    } catch (error) {
+        console.log(error)
+        res.status(error.status || 500).json(new ApiError(error.status || 500, error.message || "Password reset failed"))
+    }
+})
+
+export {registerFlat, adminresetpassword, loginFlat, displayFlats, getCurrentUser, registerFlatbyAdmin, logoutUser, sendOtpVerificationEmail, changepassword, forgotPasswordOtp, resetPassword, sendPasswordResetLink, verifyPasswordResetToken, completePasswordReset}

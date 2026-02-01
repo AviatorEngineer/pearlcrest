@@ -1,5 +1,5 @@
 import { RiDashboardLine } from 'react-icons/ri';
-import { FaExchangeAlt, FaFileAlt, FaMoneyBillAlt, FaBalanceScale, FaCheckDouble, FaMoneyCheckAlt, FaHandHoldingUsd, FaBook, FaWarehouse, FaUserFriends, FaPrayingHands, FaCross, FaUser, FaMeetup, FaCarCrash } from 'react-icons/fa';
+import { FaExchangeAlt, FaFileAlt, FaMoneyBillAlt, FaBalanceScale, FaCheckDouble, FaMoneyCheckAlt, FaHandHoldingUsd, FaBook, FaWarehouse, FaUserFriends, FaPrayingHands, FaCross, FaUser, FaMeetup, FaCarCrash, FaKey } from 'react-icons/fa';
 import { MdSecurity, MdLocalParking, MdCloseFullscreen, MdCancel, MdCheck } from 'react-icons/md';
 
 export const admin_navi = [
@@ -140,6 +140,12 @@ export const admin_navi = [
         label: 'Renters',
         path: '/db/renter-details',
         icon: FaUserFriends
+    },
+    {
+        key: 'admin-reset-password',
+        label: 'Reset Password',
+        path: '/db/admin-reset-password',
+        icon: FaKey
     }
 ];
 

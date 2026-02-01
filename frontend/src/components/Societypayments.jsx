@@ -390,42 +390,38 @@ const Societypayments = () => {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                  <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center">
-                    <FaQrcode className="mr-2 text-blue-500" /> UPI Payment
-                  </h3>
-                  <div className="flex flex-col items-center">
-                    <a href={qrlink} target="_blank" rel="noopener noreferrer">
-                      <img src={qrCodeDataUri} alt="QR Code" className="w-48 h-48 border-2 border-gray-200 rounded-lg" />
-                    </a>
-                    <p className="mt-3 text-sm text-center text-gray-600">
-                      Scan the QR code or <a href={qrlink} className="text-blue-600 hover:underline">click here</a> to pay via UPI
-                    </p>
-                    <div className="mt-2 flex justify-center">
-                      <img className="h-10" src="/static/images/bhim_sbi.jpeg" alt="bhim_upi" />
+              <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center">
+                  <FaQrcode className="mr-2 text-blue-500" /> UPI Payment
+                </h3>
+                <div className="flex flex-col items-center">
+                  <a href={qrlink} target="_blank" rel="noopener noreferrer">
+                    <img src={qrCodeDataUri} alt="QR Code" className="w-48 h-48 border-2 border-gray-200 rounded-lg" />
+                  </a>
+                  <p className="mt-3 text-sm text-center text-gray-600">
+                    Scan the QR code or <a href={qrlink} className="text-blue-600 hover:underline">click here</a> to pay via UPI
+                  </p>
+                  <div className="mt-4 flex flex-wrap justify-center gap-3">
+                    <div className="flex flex-col items-center">
+                      <img className="h-10 mb-1" src="/static/images/bhim_sbi.jpeg" alt="BHIM" title="BHIM" />
+                      <span className="text-xs text-gray-600">BHIM</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <img className="h-10 mb-1" src="/static/images/gpay_icon.png" alt="Google Pay" title="Google Pay" />
+                      <span className="text-xs text-gray-600">Google Pay</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <img className="h-10 mb-1" src="/static/images/paytm_icon.png" alt="Paytm" title="Paytm" />
+                      <span className="text-xs text-gray-600">Paytm</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <img className="h-10 mb-1" src="/static/images/amazon_pay.png" alt="Amazon Pay" title="Amazon Pay" />
+                      <span className="text-xs text-gray-600">Amazon Pay</span>
                     </div>
                   </div>
-                </div>
-
-                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                  <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center">
-                    <FiCreditCard className="mr-2 text-blue-500" /> Bank Transfer
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Account Number</p>
-                      <p className="text-gray-900 font-mono">0939000100236216</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">IFSC Code</p>
-                      <p className="text-gray-900 font-mono">PUNB0093900</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Account Name</p>
-                      <p className="text-gray-900">PEARL CREST FLAT OWNERS SOCIETY</p>
-                    </div>
-                  </div>
+                  <p className="mt-3 text-xs text-gray-500 text-center">
+                    All major UPI partners supported
+                  </p>
                 </div>
               </div>
 
@@ -443,8 +439,6 @@ const Societypayments = () => {
                     >
                       <option value="">Select Payment Mode</option>
                       <option value="UPI">UPI</option>
-                      <option value="NEFT">NEFT</option>
-                      <option value="IMPS">IMPS</option>
                       <option value="Cheque">Cheque</option>
                     </select>
                   </div>
@@ -459,11 +453,7 @@ const Societypayments = () => {
                           title={
                             paymentMode === 'UPI' 
                               ? 'UPI Reference Number should be 12-20 alphanumeric characters long.' 
-                              : paymentMode === 'NEFT' 
-                                ? 'NEFT Reference Number should be 11-22 alphanumeric characters long.' 
-                                : paymentMode === 'IMPS' 
-                                  ? 'IMPS Reference Number should be 8 to 22 alphanumeric characters long.' 
-                                  : 'Cheque Number should be 6 numeric characters long.'
+                              : 'Cheque Number should be 6 numeric characters long.'
                           }
                         >
                           <FiInfo />
@@ -474,11 +464,7 @@ const Societypayments = () => {
                         placeholder={
                           paymentMode === 'UPI' 
                             ? 'Enter 12-20 digit UPI reference' 
-                            : paymentMode === 'NEFT' 
-                              ? 'Enter 11-22 digit NEFT reference' 
-                              : paymentMode === 'IMPS' 
-                                ? 'Enter 8-22 digit IMPS reference' 
-                                : 'Enter 6-digit cheque number'
+                            : 'Enter 6-digit cheque number'
                         }
                         value={transactionId}
                         onChange={(e) => setTransactionId(e.target.value)}
@@ -486,8 +472,6 @@ const Societypayments = () => {
                       />
                       <p className="mt-1 text-xs text-gray-500">
                         {paymentMode === 'UPI' && 'Example: 12 alphanumeric characters like ABCD1234EF56'}
-                        {paymentMode === 'NEFT' && 'Example: 8-12 alphanumeric characters like NEFT123456'}
-                        {paymentMode === 'IMPS' && 'Example: 8-12 alphanumeric characters like IMPS789012'}
                         {paymentMode === 'Cheque' && 'Example: 6 digit cheque number like 123456'}
                       </p>
                     </div>

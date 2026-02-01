@@ -6,28 +6,32 @@ import { ClipLoader } from 'react-spinners';
 
 export default function ForgotPass() {
     const [showPassword, setShowPassword] = useState(false);
-    const [showPassword2, setShowPassword2] = useState(false);
     const [flatNumber, setFlatNumber] = useState('');
-    const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false); // State for loading spinner
+    const [otpSent, setOtpSent] = useState(false); // Track if OTP has been sent
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
     };
 
-    const togglePasswordVisibility2 = () => {
-        setShowPassword2(!showPassword2);
-    };
-
     const getOtp = async() => {
+        if (!flatNumber.trim()) {
+            Swal.fire({
+                title: 'Flat Number Required',
+                text: 'Please enter your flat number',
+                icon: 'error',
+                showConfirmButton: true
+            });
+            return;
+        }
+        
         setLoading(true); // Set loading state to true
         try {
-            const response = await axios.post("/api/v1/users/send-otp", {
-                flatnumber: flatNumber,
-                oldpassword: oldPassword
+            const response = await axios.post("/api/v1/users/forgot-password-otp", {
+                flatnumber: flatNumber
             });
             console.log(response);
             Swal.fire({
@@ -36,11 +40,12 @@ export default function ForgotPass() {
                 icon: 'success',
                 showConfirmButton: true
             });
+            setOtpSent(true); // Enable password reset fields
         } catch (error) {
             console.log(error);
             Swal.fire({
                 title: "Something went wrong",
-                text: error?.response?.data?.message,
+                text: error?.response?.data?.message || "Failed to send OTP",
                 icon: 'error',
                 showConfirmButton: true
             });
@@ -49,19 +54,30 @@ export default function ForgotPass() {
         }
     };
 
-    const changepass = async() => {
+    const resetPassword = async() => {
         if (confirmNewPassword !== newPassword) {
             Swal.fire({
                 title: 'Passwords not match',
-                text: 'reconfirm password',
+                text: 'Please reconfirm password',
                 icon: 'error',
                 showConfirmButton: true
             });
             return;
         }
+        
+        if (!otp.trim()) {
+            Swal.fire({
+                title: 'OTP Required',
+                text: 'Please enter the OTP sent to your email',
+                icon: 'error',
+                showConfirmButton: true
+            });
+            return;
+        }
+        
         setLoading(true); // Set loading state to true
         try {
-            const response = await axios.post("api/v1/users/change-password", {
+            const response = await axios.post("api/v1/users/reset-password", {
                 flatnumber: flatNumber,
                 newpassword: newPassword,
                 otp
@@ -70,7 +86,7 @@ export default function ForgotPass() {
             const message = response.data.message;
             let icon;
             if (status === "Pending") icon = "Warning";
-            else if (status === "Verified") icon = "Success";
+            else if (status === "Verified" || status === "Success") icon = "Success";
             console.log(status);
             console.log(message);
             Swal.fire({
@@ -83,16 +99,15 @@ export default function ForgotPass() {
                 setConfirmNewPassword('');
                 setFlatNumber('');
                 setNewPassword('');
-                setOldPassword('');
                 setOtp('');
                 setShowPassword('');
-                setShowPassword2('');
-                window.location.reload();
+                setOtpSent(false);
+                window.location.href = '/log';
             }, 1500);
         } catch (error) {
             Swal.fire({
                 title: 'Something went wrong',
-                text: error.message,
+                text: error?.response?.data?.message || error.message,
                 icon: 'error',
                 showConfirmButton: true
             });
@@ -115,95 +130,88 @@ export default function ForgotPass() {
 
                 <div className="w-full flex flex-col max-w-[500px]">
                     <div className="flex flex-col w-full mb-5">
-                        <h3 className="text-3xl font-semibold mb-4">Change Password</h3>
-                        <p className="text-base mb-2">Enter your new password.</p>
+                        <h3 className="text-3xl font-semibold mb-4">Forgot Password</h3>
+                        <p className="text-base mb-2">Enter your flat number to reset your password.</p>
                     </div>
-                    <input
-                        type="text"
-                        placeholder="Flat Number"
-                        value={flatNumber}
-                        onChange={(e) => setFlatNumber(e.target.value)}
-                        className="w-full text-black py-2 my-2 bg-transparent border-b border-black outline-none focus:outline-none"
-                    />
-                    <div className="relative">
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Old Password"
-                            value={oldPassword}
-                            onChange={(e) => setOldPassword(e.target.value)}
-                            className="w-full text-black py-2 my-2 bg-transparent border-b border-black outline-none focus:outline-none"
-                        />
-                        <button
-                            className="absolute right-4 top-4 text-gray-600 hover:text-gray-800"
-                            onClick={togglePasswordVisibility}
-                        >
-                            {showPassword ? "Hide" : "Show"} Password
-                        </button>
-                    </div>
-                    <div className="w-full flex flex-col my-4">
-                        <button
-                            className={`bg-black text-white w-full rounded-md p-4 text-center flex items-center justify-center my-2 hover:bg-black/90 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            onClick={getOtp}
-                            disabled={loading} // Disable button while loading
-                        >
-                            {loading ? (
-                                <ClipLoader color={"#ffffff"} loading={true} size={20} />
-                            ) : (
-                                "Get OTP"
-                            )}
-                        </button>
-                    </div>
-                    <div className="relative">
-                        <input
-                            type={showPassword2 ? "text" : "password"}
-                            placeholder="New Password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full text-black py-2 my-2 bg-transparent border-b border-black outline-none focus:outline-none"
-                        />
-                        <button
-                            className="absolute right-4 top-4 text-gray-600 hover:text-gray-800"
-                            onClick={togglePasswordVisibility2}
-                        >
-                            {showPassword2 ? "Hide" : "Show"} Password
-                        </button>
-                    </div>
-                    <div className="relative">
-                        <input
-                            type={showPassword2 ? "text" : "password"}
-                            placeholder="Confirm New Password"
-                            value={confirmNewPassword}
-                            onChange={(e) => setConfirmNewPassword(e.target.value)}
-                            className="w-full text-black py-2 my-2 bg-transparent border-b border-black outline-none focus:outline-none"
-                        />
-                        <button
-                            className="absolute right-4 top-4 text-gray-600 hover:text-gray-800"
-                            onClick={togglePasswordVisibility2}
-                        >
-                            {showPassword2 ? "Hide" : "Show"} Password
-                        </button>
-                    </div>
-                    <div className="relative">
-                        <input
-                            placeholder="OTP"
-                            value={otp}
-                            onChange={(e) => setOtp(e.target.value)}
-                            className="w-full text-black py-2 my-2 bg-transparent border-b border-black outline-none focus:outline-none"
-                        />
-                    </div>
-                    <div className="w-full flex flex-col my-4">
-                        <button
-                            className={`bg-black text-white w-full rounded-md p-4 text-center flex items-center justify-center my-2 hover:bg-black/90 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            onClick={changepass}
-                            disabled={loading} // Disable button while loading
-                        >
-                            {loading ? (
-                                <ClipLoader color={"#ffffff"} loading={true} size={20} />
-                            ) : (
-                                "Change Password"
-                            )}
-                        </button>
-                    </div>
+                    
+                    {!otpSent ? (
+                        <>
+                            <input
+                                type="text"
+                                placeholder="Flat Number"
+                                value={flatNumber}
+                                onChange={(e) => setFlatNumber(e.target.value)}
+                                className="w-full text-black py-2 my-2 bg-transparent border-b border-black outline-none focus:outline-none"
+                            />
+                            <div className="w-full flex flex-col my-4">
+                                <button
+                                    className={`bg-black text-white w-full rounded-md p-4 text-center flex items-center justify-center my-2 hover:bg-black/90 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    onClick={getOtp}
+                                    disabled={loading} // Disable button while loading
+                                >
+                                    {loading ? (
+                                        <ClipLoader color={"#ffffff"} loading={true} size={20} />
+                                    ) : (
+                                        "Send OTP"
+                                    )}
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="New Password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    className="w-full text-black py-2 my-2 bg-transparent border-b border-black outline-none focus:outline-none"
+                                />
+                                <button
+                                    className="absolute right-4 top-4 text-gray-600 hover:text-gray-800"
+                                    onClick={togglePasswordVisibility}
+                                >
+                                    {showPassword ? "Hide" : "Show"} Password
+                                </button>
+                            </div>
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Confirm New Password"
+                                    value={confirmNewPassword}
+                                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                    className="w-full text-black py-2 my-2 bg-transparent border-b border-black outline-none focus:outline-none"
+                                />
+                                <button
+                                    className="absolute right-4 top-4 text-gray-600 hover:text-gray-800"
+                                    onClick={togglePasswordVisibility}
+                                >
+                                    {showPassword ? "Hide" : "Show"} Password
+                                </button>
+                            </div>
+                            <div className="relative">
+                                <input
+                                    placeholder="OTP"
+                                    value={otp}
+                                    onChange={(e) => setOtp(e.target.value)}
+                                    className="w-full text-black py-2 my-2 bg-transparent border-b border-black outline-none focus:outline-none"
+                                />
+                            </div>
+                            <div className="w-full flex flex-col my-4">
+                                <button
+                                    className={`bg-black text-white w-full rounded-md p-4 text-center flex items-center justify-center my-2 hover:bg-black/90 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    onClick={resetPassword}
+                                    disabled={loading} // Disable button while loading
+                                >
+                                    {loading ? (
+                                        <ClipLoader color={"#ffffff"} loading={true} size={20} />
+                                    ) : (
+                                        "Reset Password"
+                                    )}
+                                </button>
+                            </div>
+                        </>
+                    )}
                     <div className="w-full flex items-center justify-between">
                         <Link to="/log">
                             <p className="text-sm cursor-pointer underline underline-offset-2 font-medium whitespace-nowrap">

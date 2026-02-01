@@ -47,6 +47,8 @@ import VoterRegistration from "./components/VoterRegistration";
 import VoteLoginOfficer from "./components/OfficerLogin"
 import OffDash from "./components/OfficerDash"
 import Result from "./components/Results"
+import AdminResetPassword from "./components/AdminResetPassword"
+import ResetPasswordLink from "./components/ResetPasswordLink"
 function App() {
   return (
     <div>
@@ -61,6 +63,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/paymentsuccess" element={<PaymentSucess />} />
           <Route path="/forgot-password" element={<ForgotPass />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordLink />} />
           <Route path="/results" element={<Result />} />
           <Route path="/council" element={<MemberCouncil />} />
           <Route
@@ -103,6 +106,7 @@ function App() {
             <Route path="manage-complains" element={<ExecutiveComplaints/>} />
             <Route path="raise-complains" element={<SubmitComplaint/>} />
             <Route path="daily-vis" element={<DailyVisitors/>} />
+            <Route path="admin-reset-password" element={<AdminResetPassword/>} />
           </Route>
         </Routes>
       </Router>
