@@ -51,12 +51,7 @@ const Societypayments = () => {
     setAmountper(selectedAmount);
     let newAmount;
     if (purpose === "MAINTENANCE") {
-      if(user?.flatnumber === "CG4"){
-        newAmount = selectedMonths.length * selectedAmount * 2;
-      }
-      else {
         newAmount = selectedMonths.length * selectedAmount;
-      }
     } else {
       newAmount = selectedAmount;
     }
